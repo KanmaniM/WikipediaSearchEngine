@@ -21,16 +21,10 @@ from nltk.stem import *
 from nltk.stem.snowball import SnowballStemmer
 from nltk.tokenize import RegexpTokenizer
 import pickle
-# nltk.download('porter')
-# nltk.download('stopwords')
-# from nltk.corpus import stopwords
 from nltk.stem.porter import *
 from nltk.stem import PorterStemmer as porter
+from Stemmer import Stemmer
 import operator
-# import heapq
-# import json
-# import spacy
-# from collections import OrderedDict
 
 stopwords=["a", "about", "above", "above", "across", "after", "afterwards", "again",
            "against", "all", "almost", "alone", "along", "already", "also","although",
@@ -70,92 +64,57 @@ stopwords=["a", "about", "above", "above", "across", "after", "afterwards", "aga
 ]
 
 
-
-
-
-# nlp = spacy.load('en')
-stemmer = SnowballStemmer("english")
-# STOP_WORDS = spacy.lang.en.stop_words.STOP_WORDS
-
-regExp1 = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',re.DOTALL)
-regExp2 = re.compile(r'{\|(.*?)\|}',re.DOTALL)
-regExp3 = re.compile(r'{{v?cite(.*?)}}',re.DOTALL)
-regExp4 = re.compile(r'[-.,:;_?()"/\']',re.DOTALL)
-regExp5 = re.compile(r'\[\[file:(.*?)\]\]',re.DOTALL)
-regExp6 = re.compile(r'[\'~` \n\"_!=@#$%-^*+{\[}\]\|\\<>/?]',re.DOTALL)
-catRegExp = r'\[\[category:(.*?)\]\]'
-infoRegExp = r'{{infobox(.*?)}}'
-refRegExp = r'== ?references ?==(.*?)=='
-regExp7 = re.compile(infoRegExp,re.DOTALL)
-regExp8 = re.compile(refRegExp,re.DOTALL)
-regExp9 = re.compile(r'{{(.*?)}}',re.DOTALL)
-regExp10 = re.compile(r'<(.*?)>',re.DOTALL)
-
+# global variables
+stemmer = Stemmer('porter')
 indexTable  = {}
 wordCount = 0
+wordInEachFileThreshold = 100000
+initialFileCount = 0
+folderPath = "index/"
+docNo = 0
+titleMap = {}
+wordMap = {}
+#  wordMap word: [filePath,loc]
 
-# def cleanData(data):
-#   # Tokenisation -> lower -> stopWords -> stemming
-#   data = data.lower()
-#   data = tokenizeWords(data)
-#   words = []
-#   for token in data:
-#       token = stemmer.stem(token)
-#       if len(token) <= 1 or token in stopwords:
-#           continue
-#       words.append(token)
-#   return words
 
-# def tokenizeWords(data):
-#     # data = data.lower()
-#     tokenizer = RegexpTokenizer(r'[a-zA-Z0-9_]+')
-#     return tokenizer.tokenize(data)
+#  creating title file
+
+titlefileIdx = 0
+titleThreshold = 100000
+titleList = []
+
+
+
+def writeTitleToFile():
+  global titleList
+  global titlefileIdx
+  global titlePath
+  if(len(titleList)):
+    filePath = titlePath + str(titlefileIdx) + ".txt"
+    fp1 = open(filePath,'w')
+    for title in  titleList:
+      fp1.write(title)
+    fp1.close()
+    titleList.clear()
+    titlefileIdx += 1
+
+
+
+def writeTitle(docTitle):
+  global titleThreshold
+  global titlePath
+  titleList.append(docTitle)
+  if(len(titleList) == titleThreshold):
+    writeTitleToFile()
+    
+
 
 def body(data):
   global wordCount
-  listOfBodyWords = []
-  data = data.lower()
-  data = regExp1.sub(' ', data)
-  data = regExp2.sub(' ', data)
-  data = regExp3.sub(' ', data)
-  data = regExp10.sub(' ', data)
-  data = data.replace('\'', '')
-  data = data.strip()
-  data.replace('\n', ' ')
-  data = regExp4.sub(' ', data)
-  data = regExp5.sub(' ', data)
-  data = regExp6.sub(' ', data)
-  data = regExp7.sub(' ', data)
-  data = tokenizeWords(data)
-  # data = data.split()
-  for token in data :
-    wordCount += 1
-    if token not in stopwords:
-      # listOfBodyWords.append(stemmer.stem(token))
-      listOfBodyWords.append((token))
-
+  listOfBodyWords = cleanData(data)
   return listOfBodyWords
 
-
-
-# def body(data):
-#     dataLines = data.split("\n")
-
-#     totalLines = len(dataLines)
-    
-#     databody=[]
-#     flag=True
-#     if totalLines > 1:
-#       for i in range(totalLines):
-#           if(flag):
-#               if("[[category" in dataLines[i] or "==external links==" in dataLines[i]):
-#                   flag = False
-#               else:
-#                   databody+=cleanData(dataLines[i])
-#     return databody
-
 def tokenizeWords(data):
-    # data = data.lower()
     tokenizer = RegexpTokenizer(r'[a-zA-Z0-9_]+')
     return tokenizer.tokenize(data)
 
@@ -168,12 +127,10 @@ def cleanData(data):
   words = []
   for token in data:
       wordCount += 1
-      # token = stemmer.stem(token)
       token = (token)
       if len(token) <= 1 or token in stopwords:
           continue
-      # token = token.lower()  
-      words.append(token)
+      words.append(stemmer.stemWord(token))
   return words
 
 
@@ -232,11 +189,12 @@ def reference(data):
   return referenceListWords
 
 
-
-
 def getAllsection(title,data):
 
+  
+  
   # get list of word belong to each section
+  
   litsOfWordinInfobox = infoBox(data)
   listOfWordsinCategory  = category(data)
   externalLinksWords = external(data)
@@ -260,8 +218,24 @@ def getMap(words):
   return wordMap
 
 
+def checkThreshold():
+ 
+  global wordInEachFileThreshold
+  global initialFileCount
+  global folderPath
+  if(len(indexTable)== (wordInEachFileThreshold+1)):
+    # print("folderPath:",folderPath)
+    index = "initialIndex_" + str(initialFileCount) + ".txt"
+    # print(index)
+    fileName = folderPath + index
+    fp = open(fileName, "a")
+    saveToText(fp)
+    fp.close()
+    initialFileCount += 1
+    indexTable.clear()
 
-def saveAndPreprocess(title , text , docId):
+
+def saveAndPreprocess(title , text , docId ):
   title , infoMap , categoryMap , externalData , referenceMap  , bodyMap= getAllsection(title , text)
   
   titleMap = getMap(title)
@@ -278,7 +252,8 @@ def saveAndPreprocess(title , text , docId):
     if docId not in indexTable[word]:
       indexTable[word][docId] =  {}
     indexTable[word][docId]["externalData"] = externalData[word]
-    
+    checkThreshold()
+
 
   for word in referenceMap:
     if word not in indexTable:
@@ -286,6 +261,7 @@ def saveAndPreprocess(title , text , docId):
     if docId not in indexTable[word]:
       indexTable[word][docId] = {}
     indexTable[word][docId]["referenceMap"] = referenceMap[word]
+    checkThreshold()
 
   for word in infoMap:
     if word not in indexTable:
@@ -293,6 +269,7 @@ def saveAndPreprocess(title , text , docId):
     if docId not in indexTable[word]:
       indexTable[word][docId] = {}
     indexTable[word][docId]["infoMap"] = infoMap[word]
+    checkThreshold()
 
   for word in bodyMap:
     if word not in indexTable:
@@ -300,6 +277,7 @@ def saveAndPreprocess(title , text , docId):
     if docId not in indexTable[word]:
       indexTable[word][docId] = {}
     indexTable[word][docId]["bodyMap"] = bodyMap[word]
+    checkThreshold()
 
 
   for word in categoryMap:
@@ -308,6 +286,7 @@ def saveAndPreprocess(title , text , docId):
     if docId not in indexTable[word]:
       indexTable[word][docId] = {}
     indexTable[word][docId]["categoryMap"] = categoryMap[word]
+    checkThreshold()
 
 
   for word in titleMap:
@@ -316,6 +295,7 @@ def saveAndPreprocess(title , text , docId):
     if docId not in indexTable[word]:
       indexTable[word][docId] = {}
     indexTable[word][docId]["titleMap"] = titleMap[word]
+    checkThreshold()
 
 def saveToText(fp):
   toText = None
@@ -345,11 +325,19 @@ def saveToText(fp):
         toText += str(indexTable[word][docId]["titleMap"])
 
       toText += ' '
+    
     fp.write(toText + "\n")
 
-docNo = 0
+
+
+# def mergeFiles(folderLocationOfIndex):
+
+
+
 
 class Documenthandler( xml.sax.ContentHandler ):
+  global docNo
+  global titleMap
   def __init__(self):
    self.current_tag = ""
    self.title = ""
@@ -363,13 +351,12 @@ class Documenthandler( xml.sax.ContentHandler ):
   
   def endElement(self, tag):
    if tag == "page":
-    #  save_details_of_document(self)
      saveAndPreprocess(self.title,self.body , self.docId)
+     titleMap[self.docId] = self.title
      self._pages.append((self.title,self.body))
      self.title = ""
      self.docId += 1
      docNo = self.docId
-    #  print(self.docId)
      self.body = ""
     
   
@@ -379,42 +366,149 @@ class Documenthandler( xml.sax.ContentHandler ):
     if self.current_tag == "text":
       self.body += content
 
-		# if self.current_tag == "id":
-		# 	if self.id == "":
-		# 		self.id = content
+
+def split(absPathOfMergeFile,folderLocationOfIndex):
+    global wordInEachFileThreshold
+    global wordMap
+    index = 0
+    count = 0
+    file1 = absPathOfMergeFile
+    secIndFile = folderLocationOfIndex + "secondaryIndex.txt"
+    
+    fp1=open(file1,'r') 
+    sf =open(secIndFile,'w')
+    
+    lineFile1 = fp1.readline().strip('\n')
+    
+    while( lineFile1 ):
+
+
+        if(count == 0):
+            indexFileName = folderLocationOfIndex + "index_" + str(index) + ".txt"
+            wordFile1 = lineFile1.split(":")[0]
+            sf.write(wordFile1 + '\n')
+            fp2 = open(indexFileName, 'w')
+        
+        indexFileName = folderLocationOfIndex + "index_" + str(index) + ".txt"
+        wordFile1 = lineFile1.split(":")[0]
+        wordMap[wordFile1] = [indexFileName,count]
+        
+        fp2.write(lineFile1 + '\n')
+        count += 1
+        
+        if(count == wordInEachFileThreshold):
+            count = 0
+            index += 1
+            fp2.close()
+        lineFile1 = fp1.readline().strip('\n')
+    
+    fp1.close()
+    fp2.close()
+    sf.close()
+    os.remove(absPathOfMergeFile)
+
+
+
+def mergeTwoFiles(file1 , file2 , folderLocationOfIndex):
+    # print("merge:",file1," ",file2)
+    if file1 == file2:
+        return
+    fp1 = open(file1, 'r')
+    fp2 = open(file2, 'r')
+    tempFile = folderLocationOfIndex + "temporary.txt" 
+    fp3 = open(tempFile, 'w')
+    lineFile1 = fp1.readline().strip('\n')
+    lineFile2 = fp2.readline().strip('\n')
+    while (lineFile1 and lineFile2):
+        wordFile1 = lineFile1.split(":")[0]
+        wordFile2 = lineFile2.split(":")[0]
+        if wordFile2 < wordFile1:
+            fp3.write(lineFile2 + '\n')
+            lineFile2 = fp2.readline().strip('\n')
+        elif wordFile1 < wordFile2:
+            fp3.write(lineFile1 + '\n')
+            lineFile1 = fp1.readline().strip('\n')
+        else:
+            list1 = lineFile1.strip().split(":")[1]
+            list2 = lineFile2.strip().split(':')[1]
+            fp3.write(wordFile1 + ':' + list1 + list2 + '\n')
+            lineFile1 = fp1.readline().strip('\n')
+            lineFile2 = fp2.readline().strip('\n')
+    while lineFile1:
+        fp3.write(lineFile1 + '\n')
+        lineFile1 = fp1.readline().strip('\n')
+    while lineFile2:
+        fp3.write(lineFile2 + '\n')
+        lineFile2 = fp2.readline().strip('\n')
+    os.remove(file1)
+    os.remove(file2)
+    os.rename(tempFile, file1)
+
+
+def mergeFiles(folderLocationOfIndex):
+    listOfIndexFiles = []
+    for filename in os.listdir(folderLocationOfIndex):
+        fileLocation = folderLocationOfIndex + filename
+        listOfIndexFiles.append(fileLocation)
+    listOfIndexFiles.sort()
+
+    while(len(listOfIndexFiles)>1):
+        file1 = listOfIndexFiles[0]
+        file2 = listOfIndexFiles[1]
+        mergeTwoFiles(file1 , file2 , folderLocationOfIndex)
+        listOfIndexFiles.remove(listOfIndexFiles[1])
+    split(listOfIndexFiles[0],folderLocationOfIndex)
+
 
 
 startTime = time.time()
 parser = xml.sax.make_parser()
 parser.setFeature(xml.sax.handler.feature_namespaces, 0)
 Handler = Documenthandler()
+
 parser.setContentHandler( Handler )
+indexName = "index/"
+os.mkdir("index")
 
-dumpfile = sys.argv[1]
-
-os.mkdir(sys.argv[2])
-outputFile = sys.argv[2]
-
-statisticsFile = sys.argv[3]
-
-parser.parse(dumpfile)
-filePath = outputFile + "index.txt"
-
-filestartTime = time.time()
-fp = open(filePath, "a")
-saveToText(fp)
-fp.close()
-
-
-sf = open(statisticsFile,"a")
-sf.write(str(wordCount) + "\n")
-sf.write(str(len(indexTable)))
-sf.close
-
-# print(len(indexTable))
-# print("Total time to write in file: " + str(time.time() - filestartTime))
-# print("Total time : " + str(time.time() - startTime))
+directory = sys.argv[1] 
+for filename in os.listdir(directory):
+  dumpfile = directory + filename
+  beforeParse = time.time() 
+  parser.parse(dumpfile)
+  print(dumpfile)
+  print("Parse time : " + str(time.time() - beforeParse))
 
 
 
+# // mergeFiles
+print("Before merge")
+beforeMerge = time.time() 
+mergeFiles(indexName)
 
+print("Merge time : " + str(time.time() - beforeMerge))
+
+# print("after merge")
+
+
+beforePickle = time.time()
+
+os.mkdir('titles')
+titlePath = 'titles/' +  'titleMap'
+titleFile = open(titlePath, 'ab')
+pickle.dump(titleMap, titleFile)                      
+titleFile.close()  
+
+wordPath = indexName + 'wordMap'
+wordFile = open(wordPath, 'ab')
+pickle.dump(wordMap, wordFile)                      
+wordFile.close() 
+
+print("picle Save time : " + str(time.time() - beforePickle))
+
+
+# // if some title left in list: titleList
+
+  
+
+
+print("Total time : " + str(time.time() - startTime))
