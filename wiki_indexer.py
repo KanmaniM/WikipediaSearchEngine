@@ -68,7 +68,8 @@ stopwords=["a", "about", "above", "above", "across", "after", "afterwards", "aga
 stemmer = Stemmer('porter')
 indexTable  = {}
 wordCount = 0
-wordInEachFileThreshold = 100000
+splitThreshold = 10000
+wordInEachFileThreshold = 1000000
 initialFileCount = 0
 folderPath = "index/"
 docNo = 0
@@ -302,7 +303,7 @@ def saveToText(fp):
   for word in sorted(indexTable):
     toText = word + ':'
     for docId in sorted(indexTable[word]):
-      toText += str(docId)
+      toText += 'd' + str(docId)
       
       if "infoMap" in indexTable[word][docId] and indexTable[word][docId]["infoMap"]>0:
         toText += 'i'
@@ -352,7 +353,7 @@ class Documenthandler( xml.sax.ContentHandler ):
   def endElement(self, tag):
    if tag == "page":
      saveAndPreprocess(self.title,self.body , self.docId)
-     titleMap[self.docId] = self.title
+     titleMap[self.docId] = self.title.strip()
      self._pages.append((self.title,self.body))
      self.title = ""
      self.docId += 1
@@ -368,7 +369,7 @@ class Documenthandler( xml.sax.ContentHandler ):
 
 
 def split(absPathOfMergeFile,folderLocationOfIndex):
-    global wordInEachFileThreshold
+    global splitThreshold
     global wordMap
     index = 0
     count = 0
@@ -391,12 +392,12 @@ def split(absPathOfMergeFile,folderLocationOfIndex):
         
         indexFileName = folderLocationOfIndex + "index_" + str(index) + ".txt"
         wordFile1 = lineFile1.split(":")[0]
-        wordMap[wordFile1] = [indexFileName,count]
+        # wordMap[wordFile1] = [indexFileName,count]
         
         fp2.write(lineFile1 + '\n')
         count += 1
         
-        if(count == wordInEachFileThreshold):
+        if(count == splitThreshold):
             count = 0
             index += 1
             fp2.close()
@@ -480,15 +481,10 @@ for filename in os.listdir(directory):
 
 
 
-# // mergeFiles
-print("Before merge")
 beforeMerge = time.time() 
 mergeFiles(indexName)
 
 print("Merge time : " + str(time.time() - beforeMerge))
-
-# print("after merge")
-
 
 beforePickle = time.time()
 
@@ -496,19 +492,11 @@ os.mkdir('titles')
 titlePath = 'titles/' +  'titleMap'
 titleFile = open(titlePath, 'ab')
 pickle.dump(titleMap, titleFile)                      
-titleFile.close()  
+titleFile.close()
 
-wordPath = indexName + 'wordMap'
-wordFile = open(wordPath, 'ab')
-pickle.dump(wordMap, wordFile)                      
-wordFile.close() 
+
+
 
 print("picle Save time : " + str(time.time() - beforePickle))
-
-
-# // if some title left in list: titleList
-
-  
-
 
 print("Total time : " + str(time.time() - startTime))
