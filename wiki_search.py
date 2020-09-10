@@ -281,6 +281,8 @@ def getquery(line):
     query = line[1].strip()
     return k , query
 
+
+
 rf = open(sys.argv[1],'r')
 fp = open("queries_op.txt​",'w')
 while True:

@@ -1,0 +1,7 @@
+index file is not created for 40 gb data , dut to laptop issue 
+run for 1xml file 
+
+INDEX-SIZE: 95.6 MB FOR 680 MB
+INDEX-100 indexfile containg 1000 words each 
+NUMBER-OF-TOKENS - range[1000*99 - 1000*100] 
+

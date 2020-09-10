@@ -69,16 +69,19 @@ stemmer = Stemmer('porter')
 indexTable  = {}
 wordCount = 0
 splitThreshold = 10000
-wordInEachFileThreshold = 1000000
+wordInEachFileThreshold = 100000
 initialFileCount = 0
 folderPath = "index/"
 docNo = 0
+os.mkdir('titles')
+titlePath = 'titles/' +  'titleMap.txt'
+titlePickle = 'titles/' +  'titlePickle'
 titleMap = {}
-wordMap = {}
-#  wordMap word: [filePath,loc]
+titleptr = open(titlePath,'w')
 
 
-#  creating title file
+
+
 
 titlefileIdx = 0
 titleThreshold = 100000
@@ -116,7 +119,7 @@ def body(data):
   return listOfBodyWords
 
 def tokenizeWords(data):
-    tokenizer = RegexpTokenizer(r'[a-zA-Z0-9_]+')
+    tokenizer = RegexpTokenizer(r'[a-zA-Z0-9]+')
     return tokenizer.tokenize(data)
 
 def cleanData(data):
@@ -337,6 +340,7 @@ def saveToText(fp):
 
 
 class Documenthandler( xml.sax.ContentHandler ):
+  global titleptr
   global docNo
   global titleMap
   def __init__(self):
@@ -344,17 +348,19 @@ class Documenthandler( xml.sax.ContentHandler ):
    self.title = ""
    self.docId = 0
    self.body = ""
-   self.counter = 0
-   self._pages = []
+  
+   
   
   def startElement(self, tag, attributes):
    self.current_tag = tag
   
   def endElement(self, tag):
    if tag == "page":
+
      saveAndPreprocess(self.title,self.body , self.docId)
-     titleMap[self.docId] = self.title.strip()
-     self._pages.append((self.title,self.body))
+     titleMap[self.docId] = self.title.strip() 
+     titleptr.write(self.title.strip())
+     titleptr.write('\n')
      self.title = ""
      self.docId += 1
      docNo = self.docId
@@ -370,7 +376,7 @@ class Documenthandler( xml.sax.ContentHandler ):
 
 def split(absPathOfMergeFile,folderLocationOfIndex):
     global splitThreshold
-    global wordMap
+  
     index = 0
     count = 0
     file1 = absPathOfMergeFile
@@ -392,7 +398,6 @@ def split(absPathOfMergeFile,folderLocationOfIndex):
         
         indexFileName = folderLocationOfIndex + "index_" + str(index) + ".txt"
         wordFile1 = lineFile1.split(":")[0]
-        # wordMap[wordFile1] = [indexFileName,count]
         
         fp2.write(lineFile1 + '\n')
         count += 1
@@ -463,10 +468,10 @@ def mergeFiles(folderLocationOfIndex):
 
 
 startTime = time.time()
+
 parser = xml.sax.make_parser()
 parser.setFeature(xml.sax.handler.feature_namespaces, 0)
 Handler = Documenthandler()
-
 parser.setContentHandler( Handler )
 indexName = "index/"
 os.mkdir("index")
@@ -488,14 +493,17 @@ print("Merge time : " + str(time.time() - beforeMerge))
 
 beforePickle = time.time()
 
-os.mkdir('titles')
-titlePath = 'titles/' +  'titleMap'
-titleFile = open(titlePath, 'ab')
-pickle.dump(titleMap, titleFile)                      
-titleFile.close()
+statPath = 'titles/' +  'stat.txt'
+st = open(statPath,'w')
+st.write(str(docNo))
+st.close()
+
+dbfile = open(titlePickle, 'ab') 
+pickle.dump(titleMap, dbfile)                      
+dbfile.close() 
 
 
-
+titleptr.close()
 
 print("picle Save time : " + str(time.time() - beforePickle))
 

@@ -1,1 +1,0 @@
-python3 2019201058/wiki_indexer.py $1 $2 $3
