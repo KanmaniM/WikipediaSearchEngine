@@ -1,4 +1,4 @@
-How to run :
+# How to run :
 create a folder paste wiki_indexer.py and wiki_search.py
 
 FOR INDEXING
