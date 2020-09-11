@@ -37,17 +37,17 @@ Ranking Factor While building index ranking of top 10 document corresponding to 
 Merging all temporary indexes using block based k way merge sort algorithm We have made
 
 Term Field Abbreviations For Search:
-. i abbreviated as infobox
+. infobox abbreviated as i
 
-. b abbreviated as body
+. body abbreviated as b
 
-. t abbreviated as title
+. title abbreviated as t
 
-. e abbreviated as ext
+. ext abbreviated as e
 
-. r abbreviated as ref
+. ref abbreviated as r
 
-. c abbreviated as category
+. category abbreviated as c
 
 Query Format
 . Field Query : 't:abc b:xyz c:xxy i:dde e:ref r:ext'
@@ -57,3 +57,4 @@ Query Format
 How Searching in Less than a sec
 .For normal query we do a binary search on Secondary Index and get the fileNumber of primary file, after that we extract the posting list corresponds to each word in query, then we calculate TFIDF score for each docID where word(Query) occurs and return top K documents title
 . For field query instead of calculating frequency of body we calculate frequency of that field and get documentID and rest all process goes same as normal query.
+Search Complexity: O(logn) 
