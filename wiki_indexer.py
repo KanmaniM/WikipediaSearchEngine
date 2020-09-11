@@ -69,7 +69,7 @@ stemmer = Stemmer('porter')
 indexTable  = {}
 wordCount = 0
 splitThreshold = 10000
-wordInEachFileThreshold = 100000
+wordInEachFileThreshold = 10000
 initialFileCount = 0
 folderPath = "index/"
 docNo = 0
@@ -446,24 +446,48 @@ def mergeTwoFiles(file1 , file2 , folderLocationOfIndex):
     while lineFile2:
         fp3.write(lineFile2 + '\n')
         lineFile2 = fp2.readline().strip('\n')
+    fp1.close()
+    fp2.close()
+    fp3.close()
     os.remove(file1)
     os.remove(file2)
     os.rename(tempFile, file1)
 
 
-def mergeFiles(folderLocationOfIndex):
-    listOfIndexFiles = []
-    for filename in os.listdir(folderLocationOfIndex):
-        fileLocation = folderLocationOfIndex + filename
-        listOfIndexFiles.append(fileLocation)
-    listOfIndexFiles.sort()
+# def mergeFiles(folderLocationOfIndex):
+# 	#Check if index file directory exists
+# 	if os.path.isdir(folderLocationOfIndex):
+# 		#Atleast 2 index files must be present
+# 		indexFileList=sorted(os.listdir(folderLocationOfIndex))
+# 		while len(indexFileList) >=2 :
+# 			for i in range(0,len(indexFileList),2):
+# 				if ( i + 1 ) >= len(indexFileList):
+# 					break
+#         file1 = listOfIndexFiles[i]
+#         file2 = listOfIndexFiles[i+1]
+#         mergeTwoFiles(file1 , file2 , folderLocationOfIndex)
+#       indexFileList=sorted(os.listdir(indexFileDir))
+#     indexFileList=sorted(os.listdir(indexFileDir))
+#     if len(indexFileList) == 1 :
+#       print("splitting start")
+#       split(indexFileList[0],folderLocationOfIndex)
+      
+		
 
-    while(len(listOfIndexFiles)>1):
-        file1 = listOfIndexFiles[0]
-        file2 = listOfIndexFiles[1]
-        mergeTwoFiles(file1 , file2 , folderLocationOfIndex)
-        listOfIndexFiles.remove(listOfIndexFiles[1])
-    split(listOfIndexFiles[0],folderLocationOfIndex)
+def mergeFiles(folderLocationOfIndex):
+  if os.path.isdir(folderLocationOfIndex):
+    for filename in os.listdir(folderLocationOfIndex):
+      listOfIndexFiles = sorted(os.listdir(folderLocationOfIndex))
+      while(len(listOfIndexFiles)>=2):
+        for i in range(0,len(listOfIndexFiles),2):
+          if (i+1 ) >= len(listOfIndexFiles):
+            break
+          file1 = folderLocationOfIndex + listOfIndexFiles[i]
+          file2 = folderLocationOfIndex + listOfIndexFiles[i+1]
+          mergeTwoFiles(file1 , file2 , folderLocationOfIndex)
+        listOfIndexFiles = sorted(os.listdir(folderLocationOfIndex))
+          
+        
 
 
 
@@ -485,11 +509,20 @@ for filename in os.listdir(directory):
   print("Parse time : " + str(time.time() - beforeParse))
 
 
-
+print("MergingStarted")
 beforeMerge = time.time() 
 mergeFiles(indexName)
-
 print("Merge time : " + str(time.time() - beforeMerge))
+
+
+print("splitting Started")
+splitTime = time.time()
+listOfIndexFiles = sorted(os.listdir(indexName))
+if len(listOfIndexFiles) == 1:
+  split(indexName + listOfIndexFiles[0],indexName)
+  print("split time : " + str(time.time() - splitTime))
+else:
+  print("check split logic")
 
 beforePickle = time.time()
 
@@ -508,3 +541,4 @@ titleptr.close()
 print("picle Save time : " + str(time.time() - beforePickle))
 
 print("Total time : " + str(time.time() - startTime))
+
