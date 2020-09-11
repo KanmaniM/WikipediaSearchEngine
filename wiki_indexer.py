@@ -454,23 +454,7 @@ def mergeTwoFiles(file1 , file2 , folderLocationOfIndex):
     os.rename(tempFile, file1)
 
 
-# def mergeFiles(folderLocationOfIndex):
-# 	#Check if index file directory exists
-# 	if os.path.isdir(folderLocationOfIndex):
-# 		#Atleast 2 index files must be present
-# 		indexFileList=sorted(os.listdir(folderLocationOfIndex))
-# 		while len(indexFileList) >=2 :
-# 			for i in range(0,len(indexFileList),2):
-# 				if ( i + 1 ) >= len(indexFileList):
-# 					break
-#         file1 = listOfIndexFiles[i]
-#         file2 = listOfIndexFiles[i+1]
-#         mergeTwoFiles(file1 , file2 , folderLocationOfIndex)
-#       indexFileList=sorted(os.listdir(indexFileDir))
-#     indexFileList=sorted(os.listdir(indexFileDir))
-#     if len(indexFileList) == 1 :
-#       print("splitting start")
-#       split(indexFileList[0],folderLocationOfIndex)
+
       
 		
 
