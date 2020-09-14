@@ -1,4 +1,5 @@
 				## WIKIPEDIA SEARCH ENGINE ##
+
 The mini project involves building a search engine on the Wikipedia Data Dump without using any external index. For this project, we use the data dump of size ~73 GB. The search results return in real time. Multi-word and multi-field search on Wikipedia Corpus is implemented.
 
 You also need to rank the documents and display only the top 10 most relevant documents.
@@ -58,3 +59,5 @@ How Searching in Less than a sec
 .For normal query we do a binary search on Secondary Index and get the fileNumber of primary file, after that we extract the posting list corresponds to each word in query, then we calculate TFIDF score for each docID where word(Query) occurs and return top K documents title
 . For field query instead of calculating frequency of body we calculate frequency of that field and get documentID and rest all process goes same as normal query.
 Search Complexity: O(logn) 
+
+### how to run and more depth on Algorithm, open readme.txt*
