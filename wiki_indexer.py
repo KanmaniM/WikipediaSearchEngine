@@ -119,7 +119,7 @@ def body(data):
   return listOfBodyWords
 
 def tokenizeWords(data):
-    tokenizer = RegexpTokenizer(r'[a-zA-Z0-9]+')
+    tokenizer = RegexpTokenizer(r'[A-Za-z0-9]+')
     return tokenizer.tokenize(data)
 
 def cleanData(data):

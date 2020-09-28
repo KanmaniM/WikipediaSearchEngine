@@ -67,7 +67,7 @@ stemmer = Stemmer('porter')
 
 def tokenizeWords(data):
     # data = data.lower()
-    tokenizer = RegexpTokenizer(r'[a-zA-Z0-9_]+')
+    tokenizer = RegexpTokenizer(r'[a-zA-Z0-9]+')
     return tokenizer.tokenize(data)
 
 def cleanData(data):
@@ -284,7 +284,7 @@ def getquery(line):
 
 
 rf = open(sys.argv[1],'r')
-fp = open("queries_op.txt​",'w')
+fp = open("2019201058_queries_op.txt​",'w')
 while True:
     line = rf.readline()
     if not line:
@@ -343,3 +343,6 @@ while True:
     fp.write('\n')
 fp.close()
 rf.close()
+
+
+
